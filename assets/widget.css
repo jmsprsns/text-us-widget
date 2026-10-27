@@ -1,0 +1,649 @@
+/**
+ * Text Us Widget: the launcher and the panel, styled after iOS.
+ *
+ * Nothing shows until widget.js adds .tuw-on (the visitor's device is one
+ * the widget is switched on for), and the layout comes from classes it
+ * sets, not media queries, so the settings page preview can use the same
+ * rules:
+ *   .tuw-phone   narrow screens: a bottom bar (.tuw-pl-bar) or a compact
+ *                button (.tuw-pl-button), and a bottom sheet
+ *   .tuw-wide    wider screens: a corner launcher and a popover panel
+ *
+ * Every rule starts with .tuw so theme styles for buttons, links and images
+ * don't leak in. widget.min.css is built from this file by bin/build.sh and
+ * injected by widget.js only when the widget loads.
+ */
+
+.tuw {
+	/* iOS dark-mode system colors */
+	--tuw-ease: cubic-bezier(0.32, 0.72, 0, 1);
+	--tuw-surface: #1c1c1e;
+	--tuw-fill: rgba(118, 118, 128, 0.24);
+	--tuw-fill-hover: rgba(118, 118, 128, 0.4);
+	--tuw-separator: rgba(84, 84, 88, 0.65);
+	--tuw-label: #fff;
+	--tuw-label-2: rgba(235, 235, 245, 0.6);
+	--tuw-badge: #3a3a3c;
+	--tuw-badge-hover: #48484a;
+	--tuw-badge-fg: rgba(235, 235, 245, 0.8);
+	--tuw-hairline: rgba(255, 255, 255, 0.1);
+	--tuw-grabber: rgba(235, 235, 245, 0.3);
+	--tuw-red: #ff453a;
+	--tuw-shadow: 0 14px 34px -10px rgba(0, 0, 0, 0.55);
+	--tuw-shadow-panel: 0 24px 60px -12px rgba(0, 0, 0, 0.6);
+	--tuw-accent: #0a84ff;
+	--tuw-on-accent: #fff;
+	--tuw-x: 20px;
+	--tuw-y: 20px;
+	display: none;
+	font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+	font-size: 15px;
+	font-weight: 400;
+	-webkit-font-smoothing: antialiased;
+	line-height: 1.25;
+	text-align: left;
+}
+
+.tuw.tuw-light {
+	/* iOS light-mode system colors */
+	--tuw-surface: #fff;
+	--tuw-fill: rgba(118, 118, 128, 0.12);
+	--tuw-fill-hover: rgba(118, 118, 128, 0.22);
+	--tuw-separator: rgba(60, 60, 67, 0.2);
+	--tuw-label: #000;
+	--tuw-label-2: rgba(60, 60, 67, 0.62);
+	--tuw-badge: #fff;
+	--tuw-badge-hover: #f2f2f7;
+	--tuw-badge-fg: rgba(60, 60, 67, 0.75);
+	--tuw-hairline: rgba(0, 0, 0, 0.08);
+	--tuw-grabber: rgba(60, 60, 67, 0.3);
+	--tuw-red: #e0352b;
+	--tuw-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.3);
+	--tuw-shadow-panel: 0 24px 60px -14px rgba(0, 0, 0, 0.32);
+}
+
+@media (prefers-color-scheme: light) {
+	.tuw.tuw-auto {
+		--tuw-surface: #fff;
+		--tuw-fill: rgba(118, 118, 128, 0.12);
+		--tuw-fill-hover: rgba(118, 118, 128, 0.22);
+		--tuw-separator: rgba(60, 60, 67, 0.2);
+		--tuw-label: #000;
+		--tuw-label-2: rgba(60, 60, 67, 0.62);
+		--tuw-badge: #fff;
+		--tuw-badge-hover: #f2f2f7;
+		--tuw-badge-fg: rgba(60, 60, 67, 0.75);
+		--tuw-hairline: rgba(0, 0, 0, 0.08);
+		--tuw-grabber: rgba(60, 60, 67, 0.3);
+		--tuw-red: #e0352b;
+		--tuw-shadow: 0 14px 34px -12px rgba(0, 0, 0, 0.3);
+		--tuw-shadow-panel: 0 24px 60px -14px rgba(0, 0, 0, 0.32);
+	}
+}
+
+.tuw.tuw-on {
+	display: block;
+}
+
+.tuw.tuw-dismissed {
+	display: none;
+}
+
+/* Resets: themes style buttons, links, paragraphs and images globally */
+.tuw *,
+.tuw *::before,
+.tuw *::after {
+	box-sizing: border-box;
+}
+
+.tuw button {
+	margin: 0;
+	border: 0;
+	border-radius: 0;
+	background: none;
+	box-shadow: none;
+	color: inherit;
+	font: inherit;
+	letter-spacing: normal;
+	line-height: inherit;
+	min-height: 0;
+	min-width: 0;
+	text-align: inherit;
+	text-shadow: none;
+	text-transform: none;
+	-webkit-appearance: none;
+	appearance: none;
+	cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+.tuw p {
+	margin: 0;
+	padding: 0;
+	font-size: inherit;
+	line-height: inherit;
+}
+
+.tuw a {
+	text-decoration: none;
+	box-shadow: none;
+}
+
+.tuw svg {
+	display: block;
+}
+
+.tuw img {
+	display: block;
+	max-width: none;
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	border-radius: 0;
+	box-shadow: none;
+}
+
+.tuw [hidden] {
+	display: none !important;
+}
+
+/* Launcher -------------------------------------------------------------- */
+
+.tuw .tuw-bar {
+	position: fixed;
+	z-index: 99990;
+	transform: translateY(calc(100% + var(--tuw-y) + 40px));
+	transition: transform 0.55s var(--tuw-ease), opacity 0.3s ease;
+}
+
+.tuw.tuw-shown .tuw-bar {
+	transform: none;
+}
+
+/* Repeat visits: already in place on load, no slide-in */
+.tuw.tuw-instant .tuw-bar {
+	transition: none;
+}
+
+/* Phones, at the very bottom of the page: step aside so the footer shows */
+.tuw.tuw-shown.tuw-tucked .tuw-bar {
+	transform: translateY(calc(100% + var(--tuw-y) + 40px));
+}
+
+.tuw .tuw-bar-main {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	width: 100%;
+	min-height: 64px;
+	padding: 11px 12px;
+	border-radius: 18px;
+	background: var(--tuw-surface);
+	box-shadow: var(--tuw-shadow), inset 0 0 0 0.5px var(--tuw-hairline);
+	color: var(--tuw-label);
+	text-align: left;
+	transition: transform 0.15s ease, box-shadow 0.2s ease;
+}
+
+.tuw.tuw-shown .tuw-bar-main:active {
+	transform: scale(0.98);
+}
+
+.tuw .tuw-bar-main:focus-visible,
+.tuw .tuw-bar-close:focus-visible,
+.tuw .tuw-close:focus-visible,
+.tuw .tuw-cta:focus-visible {
+	outline: 3px solid color-mix(in srgb, var(--tuw-accent) 60%, transparent);
+	outline-offset: 2px;
+}
+
+.tuw .tuw-bar-close {
+	position: absolute;
+	top: -7px;
+	right: -7px;
+	z-index: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 22px;
+	height: 22px;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--tuw-badge);
+	color: var(--tuw-badge-fg);
+	box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3), inset 0 0 0 0.5px var(--tuw-hairline);
+	transition: background 0.15s ease, color 0.15s ease, transform 0.15s ease;
+}
+
+.tuw.tuw-corner-left .tuw-bar-close {
+	right: auto;
+	left: -7px;
+}
+
+.tuw .tuw-bar-close:hover {
+	background: var(--tuw-badge-hover);
+	color: var(--tuw-label);
+}
+
+.tuw .tuw-bar-close:active {
+	transform: scale(0.92);
+}
+
+.tuw .tuw-icon {
+	display: block;
+	flex-shrink: 0;
+}
+
+.tuw .tuw-bar-icon {
+	width: 40px;
+	height: 40px;
+}
+
+.tuw .tuw-bar-text {
+	flex: 1;
+	min-width: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.tuw .tuw-bar-title {
+	font-size: 15px;
+	font-weight: 600;
+	letter-spacing: -0.2px;
+	color: var(--tuw-label);
+	text-wrap: balance;
+}
+
+/* Second line: wide screens only */
+.tuw .tuw-bar-sub {
+	display: none;
+	font-size: 13px;
+	color: var(--tuw-label-2);
+}
+
+.tuw .tuw-bar-btn {
+	flex-shrink: 0;
+	padding: 8px 15px;
+	border-radius: 8px;
+	background: var(--tuw-accent);
+	color: var(--tuw-on-accent);
+	font-size: 15px;
+	font-weight: 600;
+	white-space: nowrap;
+	transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.tuw .tuw-bar-main:active .tuw-bar-btn {
+	opacity: 0.8;
+}
+
+/* Panel ----------------------------------------------------------------- */
+
+.tuw .tuw-backdrop {
+	position: fixed;
+	top: 0;
+	right: 0;
+	bottom: 0;
+	left: 0;
+	z-index: 2147483646;
+	background: rgba(0, 0, 0, 0.5);
+	opacity: 0;
+	visibility: hidden;
+	transition: opacity 0.35s ease, visibility 0s 0.35s;
+}
+
+.tuw.tuw-open .tuw-backdrop {
+	opacity: 1;
+	visibility: visible;
+	transition-delay: 0s;
+}
+
+.tuw .tuw-sheet {
+	position: fixed;
+	z-index: 2147483647;
+	overflow-y: auto;
+	background: var(--tuw-surface);
+	color: var(--tuw-label);
+	text-align: center;
+	visibility: hidden;
+	transform: translateY(100%);
+	transition: transform 0.45s var(--tuw-ease), visibility 0s 0.45s;
+}
+
+.tuw.tuw-open .tuw-sheet {
+	visibility: visible;
+	transform: none;
+	transition-delay: 0s;
+}
+
+.tuw .tuw-sheet:focus {
+	outline: none;
+}
+
+.tuw .tuw-grabber {
+	display: block;
+	width: 36px;
+	height: 5px;
+	margin: 6px auto 0;
+	border-radius: 3px;
+	background: var(--tuw-grabber);
+}
+
+.tuw .tuw-close {
+	position: absolute;
+	top: 14px;
+	right: 14px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 30px;
+	height: 30px;
+	padding: 0;
+	border-radius: 50%;
+	background: var(--tuw-fill);
+	color: var(--tuw-label-2);
+	transition: background 0.15s ease, color 0.15s ease;
+}
+
+.tuw .tuw-close:hover {
+	background: var(--tuw-fill-hover);
+	color: var(--tuw-label);
+}
+
+.tuw .tuw-sheet-icon {
+	width: 64px;
+	height: 64px;
+	margin: 22px auto 12px;
+}
+
+.tuw .tuw-title {
+	font-size: 20px;
+	font-weight: 600;
+	letter-spacing: -0.3px;
+	line-height: 1.25;
+	color: var(--tuw-label);
+}
+
+.tuw .tuw-lead {
+	margin-top: 6px;
+	font-size: 15px;
+	line-height: 1.4;
+	color: var(--tuw-label-2);
+}
+
+.tuw .tuw-check {
+	margin-top: 22px;
+	padding-top: 18px;
+	border-top: 0.5px solid var(--tuw-separator);
+}
+
+.tuw .tuw-note {
+	margin-bottom: 10px;
+	font-size: 13px;
+	color: var(--tuw-label-2);
+}
+
+.tuw .tuw-turnstile {
+	display: flex;
+	justify-content: center;
+	min-height: 65px;
+}
+
+.tuw .tuw-status {
+	min-height: 18px;
+	margin-top: 8px;
+	font-size: 13px;
+	color: var(--tuw-label-2);
+}
+
+.tuw .tuw-status-error {
+	color: var(--tuw-red);
+}
+
+.tuw .tuw-status small {
+	display: block;
+	margin-top: 6px;
+	opacity: 0.6;
+	font-size: 12px;
+}
+
+.tuw .tuw-spinner {
+	display: inline-block;
+	width: 12px;
+	height: 12px;
+	margin-right: 6px;
+	vertical-align: -1px;
+	border: 2px solid var(--tuw-fill);
+	border-top-color: var(--tuw-label-2);
+	border-radius: 50%;
+	animation: tuw-spin 0.7s linear infinite;
+}
+
+.tuw .tuw-ready {
+	display: none;
+	margin-top: 24px;
+}
+
+.tuw.tuw-verified .tuw-check {
+	display: none;
+}
+
+.tuw.tuw-verified .tuw-ready {
+	display: block;
+}
+
+.tuw.tuw-verified.tuw-checked .tuw-ready {
+	animation: tuw-rise 0.4s var(--tuw-ease) both;
+}
+
+.tuw a.tuw-cta {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	min-height: 52px;
+	padding: 8px 16px;
+	border-radius: 12px;
+	background: var(--tuw-accent);
+	color: var(--tuw-on-accent);
+	font-size: 17px;
+	font-weight: 600;
+	line-height: 1.2;
+	text-decoration: none;
+	transition: opacity 0.15s ease, filter 0.15s ease;
+}
+
+.tuw a.tuw-cta:hover,
+.tuw a.tuw-cta:focus {
+	color: var(--tuw-on-accent);
+	filter: brightness(1.08);
+}
+
+.tuw a.tuw-cta:active {
+	opacity: 0.8;
+}
+
+.tuw .tuw-number {
+	margin-top: 12px;
+	font-size: 15px;
+	color: var(--tuw-label-2);
+	-webkit-user-select: all;
+	user-select: all;
+}
+
+@keyframes tuw-rise {
+	from { opacity: 0; transform: translateY(10px); }
+	to { opacity: 1; transform: none; }
+}
+
+@keyframes tuw-spin {
+	to { transform: rotate(360deg); }
+}
+
+/* Phones ------------------------------------------------------------------ */
+
+.tuw.tuw-phone .tuw-bar {
+	left: 10px;
+	right: 10px;
+	bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+}
+
+/* Compact button in the corner instead of a full-width bar */
+.tuw.tuw-phone.tuw-pl-button .tuw-bar {
+	left: auto;
+	right: min(var(--tuw-x), 16px);
+	bottom: calc(min(var(--tuw-y), 16px) + env(safe-area-inset-bottom, 0px));
+}
+
+.tuw.tuw-phone.tuw-pl-button.tuw-corner-left .tuw-bar {
+	left: min(var(--tuw-x), 16px);
+	right: auto;
+}
+
+.tuw.tuw-phone.tuw-pl-button .tuw-bar-main {
+	gap: 10px;
+	min-height: 0;
+	padding: 8px 8px 8px 9px;
+	border-radius: 16px;
+}
+
+.tuw.tuw-phone.tuw-pl-button .tuw-bar-icon {
+	width: 34px;
+	height: 34px;
+}
+
+.tuw.tuw-phone.tuw-pl-button .tuw-bar-text {
+	display: none;
+}
+
+.tuw.tuw-phone .tuw-sheet {
+	left: 0;
+	right: 0;
+	bottom: 0;
+	max-height: 88vh;
+	padding: 0 20px calc(22px + env(safe-area-inset-bottom, 0px));
+	border-radius: 20px 20px 0 0;
+	box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.35);
+}
+
+.tuw-lock,
+.tuw-lock body {
+	overflow: hidden !important;
+}
+
+/* Wide screens: corner launcher and popover, like a chat widget ------------ */
+
+.tuw.tuw-wide .tuw-bar {
+	right: var(--tuw-x);
+	bottom: var(--tuw-y);
+	width: max-content;
+	max-width: min(480px, calc(100vw - 2 * var(--tuw-x)));
+}
+
+.tuw.tuw-wide.tuw-corner-left .tuw-bar {
+	right: auto;
+	left: var(--tuw-x);
+}
+
+.tuw.tuw-wide .tuw-bar-main {
+	gap: 14px;
+	min-height: 74px;
+	padding: 13px 14px 13px 15px;
+	border-radius: 20px;
+}
+
+.tuw.tuw-wide .tuw-bar-icon {
+	width: 46px;
+	height: 46px;
+}
+
+.tuw.tuw-wide .tuw-bar-title {
+	line-height: 1.3;
+	white-space: nowrap;
+}
+
+.tuw.tuw-wide .tuw-bar-sub {
+	display: block;
+	line-height: 1.3;
+	white-space: nowrap;
+}
+
+.tuw.tuw-wide .tuw-bar-btn {
+	margin-left: 4px;
+	padding: 10px 16px;
+	border-radius: 10px;
+}
+
+.tuw.tuw-wide.tuw-shown .tuw-bar-main:hover {
+	box-shadow: var(--tuw-shadow), 0 6px 16px -6px rgba(0, 0, 0, 0.25), inset 0 0 0 0.5px var(--tuw-hairline);
+}
+
+.tuw.tuw-wide .tuw-bar-main:hover .tuw-bar-btn {
+	filter: brightness(1.08);
+}
+
+/* The launcher gives way to the panel while it's open */
+.tuw.tuw-wide.tuw-open .tuw-bar {
+	opacity: 0;
+	transform: translateY(12px) scale(0.97);
+	pointer-events: none;
+	transition: transform 0.25s ease, opacity 0.25s ease;
+}
+
+/* No dimming on wide screens; the backdrop only closes the panel on an outside click */
+.tuw.tuw-wide .tuw-backdrop {
+	background: transparent;
+}
+
+.tuw.tuw-wide .tuw-sheet {
+	right: var(--tuw-x);
+	bottom: var(--tuw-y);
+	width: 360px;
+	max-width: calc(100vw - 2 * var(--tuw-x));
+	max-height: calc(100vh - 2 * var(--tuw-y));
+	padding: 0 24px 24px;
+	border-radius: 20px;
+	box-shadow: var(--tuw-shadow-panel), inset 0 0 0 0.5px var(--tuw-hairline);
+	opacity: 0;
+	transform: translateY(16px) scale(0.96);
+	transform-origin: bottom right;
+	transition: transform 0.35s var(--tuw-ease), opacity 0.3s ease, visibility 0s 0.35s;
+}
+
+.tuw.tuw-wide.tuw-corner-left .tuw-sheet {
+	right: auto;
+	left: var(--tuw-x);
+	transform-origin: bottom left;
+}
+
+.tuw.tuw-wide.tuw-open .tuw-sheet {
+	opacity: 1;
+	transform: none;
+	transition-delay: 0s;
+}
+
+.tuw.tuw-wide .tuw-grabber {
+	display: none;
+}
+
+.tuw.tuw-wide .tuw-sheet-icon {
+	margin-top: 30px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.tuw *,
+	.tuw *::before,
+	.tuw *::after {
+		animation-duration: 0.01ms !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+@media print {
+	.tuw {
+		display: none !important;
+	}
+}
